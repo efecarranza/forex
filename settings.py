@@ -2,7 +2,7 @@ import os
 
 ENVIRONMENTS = {
     "streaming": {
-        "practice": "stream-fxtrade.oanda.com",
+        "practice": "stream-fxpractice.oanda.com",
         "sandbox": "stream-sandbox.oanda.com"
         },
     "api": {

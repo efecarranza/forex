@@ -6,8 +6,9 @@ from execution import Execution
 from settings import STREAM_DOMAIN, API_DOMAIN, ACCESS_TOKEN, ACCOUNT_ID
 from strategy import TestRandomStrategy
 from streaming import StreamingForexPrices
+from portfolio import Portfolio
 
-def trade(events, strategy, execution):
+def trade(events, strategy, portfolio, execution):
     """
     Carries out an infinite while loop that polls the events queue and directs each event to
     either the strategy component of the execution handler. The loop will then pause for
@@ -22,6 +23,8 @@ def trade(events, strategy, execution):
             if event is not None:
                 if event.type == 'TICK':
                     strategy.calculate_signals(event)
+                elif event.type == 'SIGNAL':
+                    portfolio.execute_signal(event)
                 elif event.type == 'ORDER':
                     print "Executing order!"
                     execution.execute_order(event)
@@ -42,10 +45,13 @@ if __name__ == "__main__":
     execution = Execution(API_DOMAIN, ACCESS_TOKEN, ACCOUNT_ID)
 
     # Create the strategy (signal) generator
-    strategy = TestRandomStrategy(instrument, units, events)
+    strategy = TestRandomStrategy(instrument, events)
+
+    # Create Portfolio
+    portfolio = Portfolio(prices, events, equity = 2000.00)
 
     # Create two separate threads -> one for trading, and the other one for price streaming
-    trade_thread = threading.Thread(target = trade, args = (events, strategy, execution))
+    trade_thread = threading.Thread(target = trade, args = (events, strategy, portfolio, execution))
     price_thread = threading.Thread(target = prices.stream_to_queue, args = [])
 
     # Start threads

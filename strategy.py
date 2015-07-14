@@ -1,22 +1,25 @@
 import random
 
-from events import OrderEvent
+from events import SignalEvent
 
 class TestRandomStrategy(object):
-    def __init__(self, instrument, units, events):
+    def __init__(self, instrument, events):
       self.instrument = instrument
-      self.units = units
+      self.invested = False
       self.events = events
       self.ticks = 0
 
     def calculate_signals(self, event):
-        print 'calculating signal..'
         if event.type == 'TICK':
             self.ticks += 1
-            if self.ticks % 5 == 0:
-                side = random.choice(['buy', 'sell'])
-                order = OrderEvent(self.instrument, self.units, 'market', side)
-                self.events.put(order)
+            if self.invested == False:
+                signal = SignalEvent(self.instrument, "market", "buy")
+                self.events.put(signal)
+                self.invested = True
+            else:
+                signal = SignalEvent(self.instrument, "market", "sell")
+                self.events.put(signal)
+                self.invested = False
 
 
 

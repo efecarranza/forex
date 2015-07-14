@@ -3,21 +3,19 @@ import json
 
 from events import TickEvent
 
-requests.packages.urllib3.disable_warnings()
-
 class StreamingForexPrices(object):
-    def __init__(
-        self, domain, access_token,
-        account_id, instruments, events_queue
-    ):
+    def __init__(self, domain, access_token, account_id, instruments, events_queue):
         self.domain = domain
         self.access_token = access_token
         self.account_id = account_id
         self.instruments = instruments
         self.events_queue = events_queue
+        self.cur_bid = None
+        self.cur_ask = None
 
     def connect_to_stream(self):
         try:
+            requests.packages.urllib3.disable_warnings()
             s = requests.Session()
             url = "https://" + self.domain + "/v1/prices"
             headers = {'Authorization' : 'Bearer ' + self.access_token}
@@ -25,7 +23,6 @@ class StreamingForexPrices(object):
             req = requests.Request('GET', url, headers = headers, params = params)
             pre = req.prepare()
             resp = s.send(pre, stream = True, verify = False)
-            print resp
             return resp
         except Exception as e:
             s.close()
@@ -48,5 +45,7 @@ class StreamingForexPrices(object):
                     time = msg["tick"]["time"]
                     bid = msg["tick"]["bid"]
                     ask = msg["tick"]["ask"]
+                    self.cur_bid = bid
+                    self.cur_ask = ask
                     tev = TickEvent(instrument, time, bid, ask)
                     self.events_queue.put(tev)
